@@ -104,3 +104,7 @@ dist
 .tern-port
 
 upload_queue/
+
+screenshots/
+
+cookies.json
