@@ -1,26 +1,28 @@
 {
-  "devDependencies": {
-    "@types/puppeteer": "^5.4.6",
-    "typescript": "^4.8.3"
-  },
-  "dependencies": {
-    "puppeteer": "^17.1.3"
-  },
   "name": "tiktok-uploader",
-  "description": "Uses puppeteer to upload tiktok content",
   "version": "1.0.0",
-  "main": "upload.ts",
+  "description": "upload tiktok videos with puppeteer",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start" : "node src/main.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gagordon1/tiktok-uploader.git"
   },
-  "author": "Garrett G",
+  "author": "Garrett Gordon",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/gagordon1/tiktok-uploader/issues"
   },
-  "homepage": "https://github.com/gagordon1/tiktok-uploader#readme"
+  "homepage": "https://github.com/gagordon1/tiktok-uploader#readme",
+  "devDependencies": {
+    "@tsconfig/node16": "^1.0.3",
+    "@types/puppeteer": "^5.4.6",
+    "typescript": "^4.8.3"
+  },
+  "dependencies": {
+    "puppeteer": "^17.1.3"
+  }
 }
