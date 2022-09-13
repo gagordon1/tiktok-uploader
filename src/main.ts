@@ -1,9 +1,13 @@
 
 import puppeteer from 'puppeteer-extra';
-import { Browser, Page } from 'puppeteer';
+import { Browser, ElementHandle, Page, Frame } from 'puppeteer';
+
+const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
+
+
 const fs = require('fs').promises;
 
-const TIKTOKURL = "https://www.tiktok.com"
+const TIKTOKURL = "https://www.tiktok.com/upload"
 
 function delay(ms: number) {
     return new Promise( resolve => setTimeout(resolve, ms) );
@@ -11,25 +15,11 @@ function delay(ms: number) {
 
 const visitTikTok = async(page : Page) =>{
     console.log("navigating to tiktok")
-    await page.goto(TIKTOKURL,{
-            waitUntil: 'networkidle0' 
-        }
-    );
-    
+    await page.goto(TIKTOKURL);
+    await delay(5000);
     await page.pdf({path : './screenshots/tiktok.pdf'})
 }
 
-const clickUpload = async (page : Page) => {
-    console.log("clicking upload")
-    await page.evaluate(() => {
-        const toClick : HTMLAnchorElement = document.querySelector('[data-e2e="upload-icon"]')?.children[0] as HTMLAnchorElement;
-        if (toClick){
-            toClick.click();
-        }
-    })
-    await delay(5000);
-    await page.pdf({path : './screenshots/uploadPage.pdf'})
-}
 const setCookies= async (page : Page, cookiesFile : string) =>{
     console.log("setting cookies")
     const cookiesString = await fs.readFile(cookiesFile);
@@ -38,23 +28,91 @@ const setCookies= async (page : Page, cookiesFile : string) =>{
 
 }
 
+const initializePage = async(page : Page) => {
+    var userAgent = 'Mozilla/5.0 (X11; Linux x86_64)' +
+    'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.39 Safari/537.36'
+    await page.setUserAgent(userAgent)
+
+    await page.setViewport({
+        width: 1920 + Math.floor(Math.random() * 100),
+        height: 3000 + Math.floor(Math.random() * 100),
+        deviceScaleFactor: 1,
+        hasTouch: false,
+        isLandscape: false,
+        isMobile: false,
+    });
+}
+
+async function setCaption(iframe :Frame, caption : string){
+    const captionEntrySelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.caption-wrap-v2 > div > div:nth-child(1) > div.jsx-1717967343.margin-t-4 > div > div.jsx-1043401508.jsx-723559856.jsx-1657608162.jsx-3887553297.editor > div > div > div > div > div > div > span"
+    await iframe.evaluate((caption, selector) =>{
+        let capitionSpan = document.querySelector(selector);
+        let c = document.createElement("span");
+        c.setAttribute("data-text", "true");
+        c.innerHTML = caption;
+        capitionSpan?.replaceChildren(c);
+    }, caption, captionEntrySelector)
+}
+
+async function uploadVideo(iframe : Frame, videoFile : string){
+    const inputSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-410242825.uploader > div > input";
+    const videoUpload : ElementHandle<HTMLInputElement> | null = await iframe.waitForSelector(inputSelector) as ElementHandle<HTMLInputElement>;
+    if(videoUpload){
+        await videoUpload.uploadFile(videoFile);
+    }
+    else{
+        console.log("Could not get element handle");
+    }
+}
+
+const postVideo = async(frame : Frame) =>{
+    console.log("posting video");
+    const buttonSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.button-row > div.jsx-2580397738.btn-post > button";
+    const button : ElementHandle | null = await frame.waitForSelector(buttonSelector) as ElementHandle;
+    if(button){
+        button.click();
+    }else{
+        console.log("Could not find button");
+    }
+}
+
+const inputDataAndPost = async (page : Page, videoFile : string, caption : string) => {
+    console.log("inputting data");
+    const handle : ElementHandle<HTMLIFrameElement> | null = await page.waitForSelector("iframe");
+    const iframe : Frame | null  = await handle?.contentFrame() as Frame;
+    if (iframe){
+        await setCaption(iframe, caption);
+        await uploadVideo(iframe, videoFile);
+    }
+    await page.pdf({path : './screenshots/inputtedData.pdf'});
+    await postVideo(iframe);
+     
+} 
+
+
+
 /**
  * Given cookie file and video file, upload a video to TikTok
  * @param cookiesFile path to cookies file which autheticates a TikTok user
  * @param videoFile path to file to upload
+ * @param caption caption for the video can include hashtags
  */
-async function uploadToTikTok(cookiesFile : string, videoFile : string){
+async function uploadToTikTok(cookiesFile : string, videoFile : string, caption : string){
     const browser : Browser = await puppeteer.launch(
         {
             defaultViewport: null,
             ignoreHTTPSErrors: true,
-            slowMo: 100,
+            slowMo: 100
         }
     );
     const page : Page  = await browser.newPage();
+    await initializePage(page);
+    const recorder = new PuppeteerScreenRecorder(page);
+    await recorder.start('./screenshots/recording.mp4');
     await setCookies(page, cookiesFile);
     await visitTikTok(page);
-    await clickUpload(page);
+    await inputDataAndPost(page, videoFile, caption);
+    await recorder.stop();
     await browser.close();
 }
 
@@ -62,9 +120,10 @@ async function uploadToTikTok(cookiesFile : string, videoFile : string){
  * Run with "npm start username password filepath"
  */
 const run = async() =>{
-    const cookiesFile = 'src/cookies.json';
-    const videoFile = './upload_queue/video.mp4';
-    await uploadToTikTok(cookiesFile, videoFile);
+    const cookiesFile = './src/cookies.json';
+    const videoFile = './src/upload_queue/video.mp4';
+    const caption = "its always sunny in Philly"
+    await uploadToTikTok(cookiesFile, videoFile, caption);
 }
 
 run();

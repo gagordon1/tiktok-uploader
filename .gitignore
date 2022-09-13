@@ -108,3 +108,5 @@ upload_queue/
 screenshots/
 
 cookies.json
+
+.DS_Store
