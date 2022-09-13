@@ -1,6 +1,7 @@
 
 import puppeteer from 'puppeteer-extra';
 import { Browser, ElementHandle, Page, Frame } from 'puppeteer';
+import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder';
 
 const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
 
@@ -61,7 +62,7 @@ async function uploadVideo(iframe : Frame, videoFile : string){
         await videoUpload.uploadFile(videoFile);
     }
     else{
-        console.log("Could not get element handle");
+        throw new Error("Could not get video upload element")
     }
 }
 
@@ -72,7 +73,7 @@ const postVideo = async(frame : Frame) =>{
     if(button){
         button.click();
     }else{
-        console.log("Could not find button");
+        throw new Error("Could not click post button")
     }
 }
 
@@ -83,6 +84,8 @@ const inputDataAndPost = async (page : Page, videoFile : string, caption : strin
     if (iframe){
         await setCaption(iframe, caption);
         await uploadVideo(iframe, videoFile);
+    }else{
+        throw new Error("Could not get content frame")
     }
     await page.pdf({path : './screenshots/inputtedData.pdf'});
     await postVideo(iframe);
@@ -107,12 +110,12 @@ async function uploadToTikTok(cookiesFile : string, videoFile : string, caption 
     );
     const page : Page  = await browser.newPage();
     await initializePage(page);
-    const recorder = new PuppeteerScreenRecorder(page);
+    const recorder : PuppeteerScreenRecorder = new PuppeteerScreenRecorder(page);
     await recorder.start('./screenshots/recording.mp4');
     await setCookies(page, cookiesFile);
     await visitTikTok(page);
     await inputDataAndPost(page, videoFile, caption);
-    await recorder.stop();
+    await recorder.stop()
     await browser.close();
 }
 
