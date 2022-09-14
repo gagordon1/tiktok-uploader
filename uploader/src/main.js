@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
+const puppeteer_screen_recorder_1 = require("puppeteer-screen-recorder");
 const fs_1 = __importDefault(require("fs"));
 const TIKTOKURL = "https://www.tiktok.com/upload";
 const TYPE_DELAY = 30;
@@ -93,12 +94,12 @@ async function uploadToTikTok(cookiesFile, videoFile, caption) {
     });
     const page = await browser.newPage();
     await initializePage(page);
-    // const recorder : PuppeteerScreenRecorder = new PuppeteerScreenRecorder(page);
-    // await recorder.start('./screenshots/recording.mp4');
+    const recorder = new puppeteer_screen_recorder_1.PuppeteerScreenRecorder(page);
+    await recorder.start('./screenshots/recording.mp4');
     await setCookies(page, cookiesFile);
     await visitTikTok(page);
     await inputDataAndPost(page, videoFile, caption);
-    // await recorder.stop()
+    await recorder.stop();
     await browser.close();
 }
 /**

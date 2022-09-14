@@ -107,12 +107,12 @@ async function uploadToTikTok(cookiesFile : string, videoFile : string, caption 
     );
     const page : Page  = await browser.newPage();
     await initializePage(page);
-    // const recorder : PuppeteerScreenRecorder = new PuppeteerScreenRecorder(page);
-    // await recorder.start('./screenshots/recording.mp4');
+    const recorder : PuppeteerScreenRecorder = new PuppeteerScreenRecorder(page);
+    await recorder.start('./screenshots/recording.mp4');
     await setCookies(page, cookiesFile);
     await visitTikTok(page);
     await inputDataAndPost(page, videoFile, caption);
-    // await recorder.stop()
+    await recorder.stop()
     await browser.close();
 }
 
