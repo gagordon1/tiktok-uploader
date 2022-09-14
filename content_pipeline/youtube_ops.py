@@ -8,14 +8,15 @@ YOUTUBE_SEARCH_ENDPOINT = "https://www.googleapis.com/youtube/v3/search"
 YOUTUBE_VIDEO_ENDPOINT = "https://www.googleapis.com/youtube/v3/videos"
 YOUTUBE_VIDEO_LINK_BASE = "https://www.youtube.com/watch?v="
 
-def batch_search_videos(keyword : str, api_key : str, page_token : str) -> Tuple[List[dict], str]:
+def batch_search_videos(keyword : str, api_key : str, page_token : str, max_results : int) -> Tuple[List[dict], str]:
     search_params = {
             "key" : api_key,
             "part" : "snippet",
             "q" : keyword,
             "order" : "viewCount",
             "type" : "video",
-            "videoDuration" : "short"
+            "videoDuration" : "short",
+            "maxResults" : max_results
         }
     if page_token:
         search_params["pageToken"] = page_token
@@ -52,7 +53,7 @@ def search_youtube(api_key : str, keyword : str, num_results : int, max_duration
     videos = None
     page_token = None
     while len(out) < num_results and (not videos or len(videos) > 0):
-        videos, page_token = batch_search_videos(keyword, api_key, page_token)
+        videos, page_token = batch_search_videos(keyword, api_key, page_token, min(50, max(5, num_results - len(out)) ))
         for vid in videos:
             video_id = vid["id"]["videoId"]
             if get_duration(video_id, api_key) < max_duration:
