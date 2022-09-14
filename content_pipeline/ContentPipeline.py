@@ -84,7 +84,7 @@ class ContentPipeline:
         """
         results = []
         if self.source == "youtube":
-            results = search_youtube(self.topic, n, api_key, max_duration)
+            results = search_youtube(api_key, self.topic, n, max_duration)
         self.set_pipeline_data(
             {
                 "links" : results

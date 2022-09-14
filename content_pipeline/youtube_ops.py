@@ -35,7 +35,7 @@ def get_duration(video_id : str, api_key : str) -> int:
     dt : Timedelta = Timedelta(duration)
     return int(dt.total_seconds())
 
-def search_youtube(keyword : str, num_results : int, api_key : str, max_duration : int = 60) -> List[str]:
+def search_youtube(api_key : str, keyword : str, num_results : int, max_duration : int = 60) -> List[str]:
     """Searches youtube given a keyword, desired result size and max duration
 
     Args:

@@ -8,7 +8,7 @@ YOUTUBE_SEARCH_API_KEY = os.getenv('YOUTUBE_SEARCH_API_KEY')
 
 if __name__ == "__main__":
     n = 5
-    topic = "its always sunny in philadelphia"
+    topic = "Miata"
     max_duration = 118
     cp = ContentPipeline(topic)
     cp.build_pipeline(n, max_duration, YOUTUBE_SEARCH_API_KEY)
