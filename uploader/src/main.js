@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_screen_recorder_1 = require("puppeteer-screen-recorder");
-const fs = require('fs').promises;
+const fs_1 = __importDefault(require("fs"));
 const TIKTOKURL = "https://www.tiktok.com/upload";
 const TYPE_DELAY = 30;
 const WAIT_DELAY = 5000;
@@ -20,7 +20,7 @@ const visitTikTok = async (page) => {
 };
 const setCookies = async (page, cookiesFile) => {
     console.log("setting cookies");
-    const cookiesString = await fs.readFile(cookiesFile);
+    const cookiesString = await fs_1.default.readFileSync(cookiesFile).toString();
     const cookies = JSON.parse(cookiesString);
     await page.setCookie(...cookies);
 };
@@ -106,9 +106,10 @@ async function uploadToTikTok(cookiesFile, videoFile, caption) {
  * Run with "npm start"
  */
 const run = async () => {
-    const cookiesFile = './src/cookies.json';
-    const videoFile = './src/upload_queue/video.mp4';
-    const caption = "its always sunny in Philly";
+    const cookiesFile = './config/cookies.json';
+    const caption = fs_1.default.readFileSync("./config/caption.txt").toString('utf-8');
+    const videoFiles = fs_1.default.readdirSync("./content");
+    const videoFile = "./content/" + videoFiles.find((val) => val.endsWith(".mp4"));
     await uploadToTikTok(cookiesFile, videoFile, caption);
 };
 run();

@@ -2,9 +2,7 @@
 import puppeteer from 'puppeteer-extra';
 import { Browser, ElementHandle, Page, Frame } from 'puppeteer';
 import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder';
-
-
-const fs = require('fs').promises;
+import fs from 'fs'
 
 const TIKTOKURL = "https://www.tiktok.com/upload"
 
@@ -25,7 +23,7 @@ const visitTikTok = async(page : Page) =>{
 
 const setCookies= async (page : Page, cookiesFile : string) =>{
     console.log("setting cookies")
-    const cookiesString = await fs.readFile(cookiesFile);
+    const cookiesString = await fs.readFileSync(cookiesFile).toString();
     const cookies = JSON.parse(cookiesString);
     await page.setCookie(...cookies);
 
@@ -109,12 +107,12 @@ async function uploadToTikTok(cookiesFile : string, videoFile : string, caption 
     );
     const page : Page  = await browser.newPage();
     await initializePage(page);
-    const recorder : PuppeteerScreenRecorder = new PuppeteerScreenRecorder(page);
-    await recorder.start('./screenshots/recording.mp4');
+    // const recorder : PuppeteerScreenRecorder = new PuppeteerScreenRecorder(page);
+    // await recorder.start('./screenshots/recording.mp4');
     await setCookies(page, cookiesFile);
     await visitTikTok(page);
     await inputDataAndPost(page, videoFile, caption);
-    await recorder.stop()
+    // await recorder.stop()
     await browser.close();
 }
 
@@ -122,9 +120,10 @@ async function uploadToTikTok(cookiesFile : string, videoFile : string, caption 
  * Run with "npm start"
  */
 const run = async() =>{
-    const cookiesFile = './src/cookies.json';
-    const videoFile = './src/upload_queue/video.mp4';
-    const caption = "its always sunny in Philly"
+    const cookiesFile = './config/cookies.json';
+    const caption = fs.readFileSync("./config/caption.txt").toString('utf-8');
+    const videoFiles : string[] = fs.readdirSync("./content");
+    const videoFile = "./content/" + videoFiles.find((val) => val.endsWith(".mp4"));
     await uploadToTikTok(cookiesFile, videoFile, caption);
 }
 

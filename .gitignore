@@ -114,3 +114,5 @@ cookies.json
 __pycache__
 
 content
+
+config
