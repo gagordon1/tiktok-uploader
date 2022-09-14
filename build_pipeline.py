@@ -7,10 +7,10 @@ load_dotenv()
 YOUTUBE_SEARCH_API_KEY = os.getenv('YOUTUBE_SEARCH_API_KEY')
 
 if __name__ == "__main__":
-    n = 30
-    topic = "Miata"
+    n = 4
+    topic = "Family Guy"
     source = "youtube"
-    max_duration = 118 #seconds
+    max_duration = 60 #seconds
     
     build_pipeline(topic, source, n, max_duration, YOUTUBE_SEARCH_API_KEY)
 

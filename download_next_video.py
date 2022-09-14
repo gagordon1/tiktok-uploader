@@ -10,11 +10,19 @@ def download_youtube_video(link:str, filename : str):
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         ydl.download([link])
 
-if __name__ == "__main__":
-    pipeline_filename = "pipeline.json"
+def try_download():
     if cp.has_next():
         next_link = cp.get_next()
         filename = "content/" + str(uuid.uuid4()) + '.mp4'
-        download_youtube_video(next_link, filename)
+        try:
+            download_youtube_video(next_link, filename)
+        except:
+            print("Could not download {}".format(next_link))
+            try_download()
     else:
         print("pipeline empty")
+
+if __name__ == "__main__":
+    pipeline_filename = "pipeline.json"
+    try_download()
+
