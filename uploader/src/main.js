@@ -9,6 +9,12 @@ const fs_1 = __importDefault(require("fs"));
 const TIKTOKURL = "https://www.tiktok.com/upload";
 const TYPE_DELAY = 30;
 const WAIT_DELAY = 5000;
+//TIKTOK UPLOAD PAGE SPECIFIC VARIABLES
+const captionEntrySelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.caption-wrap-v2 > div > div:nth-child(1) > div.jsx-1717967343.margin-t-4 > div > div.jsx-1043401508.jsx-723559856.jsx-1657608162.jsx-3887553297.editor > div > div > div";
+const videoInputSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-410242825.uploader > div > input";
+const buttonSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.button-row > div.jsx-2580397738.btn-post > button";
+const videoSuccessModalSelector = "#portal-container > div > div > div.jsx-461155393.jsx-3220008684.modal > div.jsx-461155393.jsx-3220008684.modal-title-container > div";
+const expectedSuccessMessage = "Your video is being uploaded to TikTok!";
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -38,14 +44,12 @@ const initializePage = async (page) => {
     });
 };
 async function setCaption(iframe, caption) {
-    const captionEntrySelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.caption-wrap-v2 > div > div:nth-child(1) > div.jsx-1717967343.margin-t-4 > div > div.jsx-1043401508.jsx-723559856.jsx-1657608162.jsx-3887553297.editor > div > div > div";
     await iframe.type(captionEntrySelector, caption, {
         delay: TYPE_DELAY
     });
 }
 async function uploadVideo(iframe, videoFile) {
-    const inputSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-410242825.uploader > div > input";
-    const videoUpload = await iframe.waitForSelector(inputSelector);
+    const videoUpload = await iframe.waitForSelector(videoInputSelector);
     if (videoUpload) {
         await videoUpload.uploadFile(videoFile);
     }
@@ -53,14 +57,33 @@ async function uploadVideo(iframe, videoFile) {
         throw new Error("Could not get video upload element");
     }
 }
+async function checkSuccess(frame) {
+    let modal = await frame.waitForSelector(videoSuccessModalSelector);
+    const videoSuccess = await frame.evaluate((selector, message) => {
+        let div = document.querySelector(selector);
+        if (div) {
+            return div.innerText === message;
+        }
+        return false;
+    }, videoSuccessModalSelector, expectedSuccessMessage);
+    return videoSuccess;
+}
+/**
+ * Given a frame containing the post button, post the video and wait for a
+ * success message
+ * @param frame
+ */
 const postVideo = async (frame) => {
     console.log("posting video");
-    const buttonSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.button-row > div.jsx-2580397738.btn-post > button";
-    const button = await frame.waitForSelector(buttonSelector);
-    if (button) {
-        button.click();
-        console.log("video posted");
-        await delay(WAIT_DELAY);
+    const postButton = await frame.waitForSelector(buttonSelector);
+    if (postButton) {
+        postButton.click();
+        if (await checkSuccess(frame)) {
+            console.log("video posted");
+        }
+        else {
+            throw new Error("Error posting video");
+        }
     }
     else {
         throw new Error("Could not click post button");

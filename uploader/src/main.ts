@@ -10,6 +10,13 @@ const TYPE_DELAY = 30
 
 const WAIT_DELAY = 5000
 
+//TIKTOK UPLOAD PAGE SPECIFIC VARIABLES
+const captionEntrySelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.caption-wrap-v2 > div > div:nth-child(1) > div.jsx-1717967343.margin-t-4 > div > div.jsx-1043401508.jsx-723559856.jsx-1657608162.jsx-3887553297.editor > div > div > div";
+const videoInputSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-410242825.uploader > div > input";
+const buttonSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.button-row > div.jsx-2580397738.btn-post > button";
+const videoSuccessModalSelector = "#portal-container > div > div > div.jsx-461155393.jsx-3220008684.modal > div.jsx-461155393.jsx-3220008684.modal-title-container > div";
+const expectedSuccessMessage = "Your video is being uploaded to TikTok!"
+
 function delay(ms: number) : Promise<void> {
     return new Promise( resolve => setTimeout(resolve, ms) );
 }
@@ -45,15 +52,15 @@ const initializePage = async(page : Page) => {
 }
 
 async function setCaption(iframe :Frame, caption : string){
-    const captionEntrySelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.caption-wrap-v2 > div > div:nth-child(1) > div.jsx-1717967343.margin-t-4 > div > div.jsx-1043401508.jsx-723559856.jsx-1657608162.jsx-3887553297.editor > div > div > div"
+    
     await iframe.type(captionEntrySelector, caption, {
         delay : TYPE_DELAY
     })
 }
 
 async function uploadVideo(iframe : Frame, videoFile : string){
-    const inputSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-410242825.uploader > div > input";
-    const videoUpload : ElementHandle<HTMLInputElement> | null = await iframe.waitForSelector(inputSelector) as ElementHandle<HTMLInputElement>;
+    
+    const videoUpload : ElementHandle<HTMLInputElement> | null = await iframe.waitForSelector(videoInputSelector) as ElementHandle<HTMLInputElement>;
     if(videoUpload){
         await videoUpload.uploadFile(videoFile);
     }
@@ -62,14 +69,34 @@ async function uploadVideo(iframe : Frame, videoFile : string){
     }
 }
 
+async function checkSuccess(frame : Frame) : Promise<boolean>{
+    let modal : ElementHandle | null = await frame.waitForSelector(videoSuccessModalSelector);
+    const videoSuccess : boolean | undefined = await frame.evaluate((selector : string, message : string)=>{
+            let div : HTMLDivElement | null = document.querySelector(selector);
+            if (div){
+                return div.innerText === message;
+            }
+            return false
+        }, videoSuccessModalSelector, expectedSuccessMessage                      
+    );
+    return videoSuccess;
+}
+
+/**
+ * Given a frame containing the post button, post the video and wait for a
+ * success message
+ * @param frame 
+ */
 const postVideo = async(frame : Frame) =>{
     console.log("posting video");
-    const buttonSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.button-row > div.jsx-2580397738.btn-post > button";
-    const button : ElementHandle | null = await frame.waitForSelector(buttonSelector) as ElementHandle;
-    if(button){
-        button.click();
-        console.log("video posted")
-        await delay(WAIT_DELAY)
+    const postButton : ElementHandle | null = await frame.waitForSelector(buttonSelector) as ElementHandle;
+    if(postButton){
+        postButton.click();
+        if(await checkSuccess(frame)){
+            console.log("video posted")
+        }else{
+            throw new Error("Error posting video")
+        }
     }else{
         throw new Error("Could not click post button")
     }

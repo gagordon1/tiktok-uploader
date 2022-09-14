@@ -24,5 +24,6 @@ def try_download():
 
 if __name__ == "__main__":
     pipeline_filename = "pipeline.json"
-    try_download()
+    # try_download()
+    download_youtube_video("https://www.youtube.com/watch?v=CtOEig1l8SA", "content/1.mp4")
 
