@@ -12,7 +12,7 @@ const TYPE_DELAY = 30
 
 const WAIT_DELAY = 5000
 
-function delay(ms: number) {
+function delay(ms: number) : Promise<void> {
     return new Promise( resolve => setTimeout(resolve, ms) );
 }
 

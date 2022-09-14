@@ -7,7 +7,7 @@ const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_screen_recorder_1 = require("puppeteer-screen-recorder");
 const fs = require('fs').promises;
 const TIKTOKURL = "https://www.tiktok.com/upload";
-const TYPE_DELAY = 80;
+const TYPE_DELAY = 30;
 const WAIT_DELAY = 5000;
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -90,8 +90,7 @@ async function uploadToTikTok(cookiesFile, videoFile, caption) {
     const browser = await puppeteer_extra_1.default.launch({
         defaultViewport: null,
         ignoreHTTPSErrors: true,
-        slowMo: 100,
-        headless: false
+        slowMo: 100
     });
     const page = await browser.newPage();
     await initializePage(page);
