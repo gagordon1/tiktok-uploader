@@ -1,4 +1,7 @@
 import json
+from content_pipeline.youtube_ops import search_youtube
+
+PIPELINE_FILENAME = "pipeline.json"
 
 
 class ContentPipeline:
@@ -6,9 +9,9 @@ class ContentPipeline:
         of unique video links to pull from
     """
     def __init__(self, topic  : str, source : str = "youtube"):
-        self.topic = topic
-        self.source = source
-        self.pipeline_file = "pipeline.json"
+        self.set_topic(topic)
+        self.set_source(source)
+        self.pipeline_file = PIPELINE_FILENAME
         self.set_pipeline_data(
             {
                 "links" : []
@@ -31,6 +34,8 @@ class ContentPipeline:
         Args:
             source (str): youtube | TBU
         """
+        if source not in {"youtube"}:
+            raise Exception("Invalid Content Source Selected.")
         self.source = source
 
     def has_next(self) -> bool:
@@ -56,15 +61,8 @@ class ContentPipeline:
         links = data["links"]
         out = links.pop(0)
         data["links"] = links
+        self.set_pipeline_data(data)
         return out
-
-    def build_pipeline(self, n : int):
-        """If the pipeline has a source and topic, build the pipeline
-
-        Args:
-            n (int): number of links to add to the pipeline
-        """
-        pass
     
     def get_pipeline_data(self) -> dict:
         with open(self.pipeline_file, "r") as open_file:
@@ -75,4 +73,21 @@ class ContentPipeline:
         with open(self.pipeline_file, "w") as open_file:
             json.dump(data, open_file)
 
+    def build_pipeline(self, n : int, max_duration : int, api_key : str):
+        """If the pipeline has a source and topic, build the pipeline
+            valid topic and source must be set.
+
+        Args:
+            n (int): number of links to add to the pipeline
+            max_duration (int): max duration for videos to be returned
+            api_key (str) : api key for specified pipeline
+        """
+        results = []
+        if self.source == "youtube":
+            results = search_youtube(self.topic, n, api_key, max_duration)
+        self.set_pipeline_data(
+            {
+                "links" : results
+            }
+        )
 
