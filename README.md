@@ -4,8 +4,7 @@ Instruections:
 
 generate links of good content to post
 
-run python3 build_pipeline.py
+update settings in content_settings.json file
+add cookies.json file in config
 
-start infinite posting loop
-
-run sh upload_next.sh -i 
+run sh ./start.sh  
