@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
-const puppeteer_screen_recorder_1 = require("puppeteer-screen-recorder");
 const fs_1 = __importDefault(require("fs"));
 const TIKTOKURL = "https://www.tiktok.com/upload";
 const TYPE_DELAY = 30;
@@ -94,12 +93,12 @@ async function uploadToTikTok(cookiesFile, videoFile, caption) {
     });
     const page = await browser.newPage();
     await initializePage(page);
-    const recorder = new puppeteer_screen_recorder_1.PuppeteerScreenRecorder(page);
-    await recorder.start('./screenshots/recording.mp4');
+    // const recorder : PuppeteerScreenRecorder = new PuppeteerScreenRecorder(page);
+    // await recorder.start('./screenshots/recording.mp4');
     await setCookies(page, cookiesFile);
     await visitTikTok(page);
     await inputDataAndPost(page, videoFile, caption);
-    await recorder.stop();
+    // await recorder.stop()
     await browser.close();
 }
 /**
@@ -107,7 +106,9 @@ async function uploadToTikTok(cookiesFile, videoFile, caption) {
  */
 const run = async () => {
     const cookiesFile = './config/cookies.json';
-    const caption = fs_1.default.readFileSync("./config/caption.txt").toString('utf-8');
+    const content_settings_string = fs_1.default.readFileSync("config/content_settings.json").toString();
+    const content_settings = JSON.parse(content_settings_string);
+    const caption = content_settings["caption"];
     const videoFiles = fs_1.default.readdirSync("./content");
     const videoFile = "./content/" + videoFiles.find((val) => val.endsWith(".mp4"));
     await uploadToTikTok(cookiesFile, videoFile, caption);

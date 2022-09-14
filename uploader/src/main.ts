@@ -121,7 +121,9 @@ async function uploadToTikTok(cookiesFile : string, videoFile : string, caption 
  */
 const run = async() =>{
     const cookiesFile = './config/cookies.json';
-    const caption = fs.readFileSync("./config/caption.txt").toString('utf-8');
+    const content_settings_string = fs.readFileSync("config/content_settings.json").toString()
+    const content_settings = JSON.parse(content_settings_string);
+    const caption = content_settings["caption"]
     const videoFiles : string[] = fs.readdirSync("./content");
     const videoFile = "./content/" + videoFiles.find((val) => val.endsWith(".mp4"));
     await uploadToTikTok(cookiesFile, videoFile, caption);
