@@ -9,7 +9,7 @@ const fs_1 = __importDefault(require("fs"));
 const TIKTOKURL = "https://www.tiktok.com/upload";
 const TYPE_DELAY = 30;
 const WAIT_DELAY = 5000;
-//TIKTOK UPLOAD PAGE SPECIFIC VARIABLES
+//TIKTOK UPLOAD PAGE-SPECIFIC VARIABLES
 const captionEntrySelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.caption-wrap-v2 > div > div:nth-child(1) > div.jsx-1717967343.margin-t-4 > div > div.jsx-1043401508.jsx-723559856.jsx-1657608162.jsx-3887553297.editor > div > div > div";
 const videoInputSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-410242825.uploader > div > input";
 const buttonSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.button-row > div.jsx-2580397738.btn-post > button";
@@ -125,6 +125,9 @@ async function uploadToTikTok(cookiesFile, videoFile, caption) {
     await recorder.stop();
     await browser.close();
 }
+//UPLOAD TO REELS FUNCTIONS
+const uploadToReels = async (videoFile, caption) => {
+};
 /**
  * Run with "npm start"
  */
@@ -132,9 +135,15 @@ const run = async () => {
     const cookiesFile = './config/cookies.json';
     const content_settings_string = fs_1.default.readFileSync("config/content_settings.json").toString();
     const content_settings = JSON.parse(content_settings_string);
-    const caption = content_settings["caption"];
+    const caption = content_settings.caption;
     const videoFiles = fs_1.default.readdirSync("./content");
     const videoFile = "./content/" + videoFiles.find((val) => val.endsWith(".mp4"));
-    await uploadToTikTok(cookiesFile, videoFile, caption);
+    const destination = content_settings.destination;
+    if (destination == "tiktok") {
+        await uploadToTikTok(cookiesFile, videoFile, caption);
+    }
+    else if (destination == "reels") {
+        await uploadToReels(videoFile, caption);
+    }
 };
 run();

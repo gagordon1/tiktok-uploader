@@ -21,14 +21,14 @@ function delay(ms: number) : Promise<void> {
     return new Promise( resolve => setTimeout(resolve, ms) );
 }
 
-const visitTikTok = async(page : Page) =>{
+const visitTikTok = async(page : Page) : Promise<void> =>{
     console.log("navigating to tiktok")
     await page.goto(TIKTOKURL);
     await delay(WAIT_DELAY);
     await page.pdf({path : './screenshots/tiktok.pdf'})
 }
 
-const setCookies= async (page : Page, cookiesFile : string) =>{
+const setCookies= async (page : Page, cookiesFile : string) : Promise<void> =>{
     console.log("setting cookies")
     const cookiesString = await fs.readFileSync(cookiesFile).toString();
     const cookies = JSON.parse(cookiesString);
@@ -36,7 +36,7 @@ const setCookies= async (page : Page, cookiesFile : string) =>{
 
 }
 
-const initializePage = async(page : Page) => {
+const initializePage = async(page : Page) : Promise<void> => {
     var userAgent = 'Mozilla/5.0 (X11; Linux x86_64)' +
     'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.39 Safari/537.36'
     await page.setUserAgent(userAgent)
@@ -51,14 +51,14 @@ const initializePage = async(page : Page) => {
     });
 }
 
-async function setCaption(iframe :Frame, caption : string){
+async function setCaption(iframe :Frame, caption : string) : Promise<void>{
     
     await iframe.type(captionEntrySelector, caption, {
         delay : TYPE_DELAY
     })
 }
 
-async function uploadVideo(iframe : Frame, videoFile : string){
+async function uploadVideo(iframe : Frame, videoFile : string) : Promise<void>{
     
     const videoUpload : ElementHandle<HTMLInputElement> | null = await iframe.waitForSelector(videoInputSelector) as ElementHandle<HTMLInputElement>;
     if(videoUpload){
@@ -87,7 +87,7 @@ async function checkSuccess(frame : Frame) : Promise<boolean>{
  * success message
  * @param frame 
  */
-const postVideo = async(frame : Frame) =>{
+const postVideo = async(frame : Frame) : Promise<void> =>{
     console.log("posting video");
     const postButton : ElementHandle | null = await frame.waitForSelector(buttonSelector) as ElementHandle;
     if(postButton){
@@ -102,7 +102,7 @@ const postVideo = async(frame : Frame) =>{
     }
 }
 
-const inputDataAndPost = async (page : Page, videoFile : string, caption : string) => {
+const inputDataAndPost = async (page : Page, videoFile : string, caption : string) : Promise<void> => {
     console.log("inputting data");
     const handle : ElementHandle<HTMLIFrameElement> | null = await page.waitForSelector("iframe");
     const iframe : Frame | null  = await handle?.contentFrame() as Frame;
@@ -124,7 +124,7 @@ const inputDataAndPost = async (page : Page, videoFile : string, caption : strin
  * @param videoFile path to file to upload
  * @param caption caption for the video can include hashtags
  */
-async function uploadToTikTok(cookiesFile : string, videoFile : string, caption : string){
+async function uploadToTikTok(cookiesFile : string, videoFile : string, caption : string) : Promise<void>{
     const browser : Browser = await puppeteer.launch(
         {
             defaultViewport: null,
@@ -143,6 +143,14 @@ async function uploadToTikTok(cookiesFile : string, videoFile : string, caption 
     await browser.close();
 }
 
+
+
+
+//UPLOAD TO REELS FUNCTIONS
+const uploadToReels = async (videoFile : string, caption : string) : Promise<void> =>{
+
+}
+
 /**
  * Run with "npm start"
  */
@@ -150,11 +158,16 @@ const run = async() =>{
     const cookiesFile = './config/cookies.json';
     const content_settings_string = fs.readFileSync("config/content_settings.json").toString()
     const content_settings = JSON.parse(content_settings_string);
-    const caption = content_settings["caption"]
+    const caption = content_settings.caption
     const videoFiles : string[] = fs.readdirSync("./content");
     const videoFile = "./content/" + videoFiles.find((val) => val.endsWith(".mp4"));
-    await uploadToTikTok(cookiesFile, videoFile, caption);
-}
+    const destination = content_settings.destination
+    if(destination == "tiktok"){
+        await uploadToTikTok(cookiesFile, videoFile, caption);
+    }else if (destination == "reels"){
+        await uploadToReels(videoFile, caption);
+    }
+}   
 
 run();
        
