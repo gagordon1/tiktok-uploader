@@ -3,12 +3,14 @@ import puppeteer from 'puppeteer-extra';
 import { Browser, ElementHandle, Page, Frame } from 'puppeteer';
 import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder';
 
-const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
-
 
 const fs = require('fs').promises;
 
 const TIKTOKURL = "https://www.tiktok.com/upload"
+
+const TYPE_DELAY = 30
+
+const WAIT_DELAY = 5000
 
 function delay(ms: number) {
     return new Promise( resolve => setTimeout(resolve, ms) );
@@ -17,7 +19,7 @@ function delay(ms: number) {
 const visitTikTok = async(page : Page) =>{
     console.log("navigating to tiktok")
     await page.goto(TIKTOKURL);
-    await delay(5000);
+    await delay(WAIT_DELAY);
     await page.pdf({path : './screenshots/tiktok.pdf'})
 }
 
@@ -35,24 +37,20 @@ const initializePage = async(page : Page) => {
     await page.setUserAgent(userAgent)
 
     await page.setViewport({
-        width: 1920 + Math.floor(Math.random() * 100),
-        height: 3000 + Math.floor(Math.random() * 100),
+        width: 1300 + Math.floor(Math.random() * 100),
+        height: 800 + Math.floor(Math.random() * 100),
         deviceScaleFactor: 1,
         hasTouch: false,
-        isLandscape: false,
+        isLandscape: true,
         isMobile: false,
     });
 }
 
 async function setCaption(iframe :Frame, caption : string){
-    const captionEntrySelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.caption-wrap-v2 > div > div:nth-child(1) > div.jsx-1717967343.margin-t-4 > div > div.jsx-1043401508.jsx-723559856.jsx-1657608162.jsx-3887553297.editor > div > div > div > div > div > div > span"
-    await iframe.evaluate((caption, selector) =>{
-        let capitionSpan = document.querySelector(selector);
-        let c = document.createElement("span");
-        c.setAttribute("data-text", "true");
-        c.innerHTML = caption;
-        capitionSpan?.replaceChildren(c);
-    }, caption, captionEntrySelector)
+    const captionEntrySelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.caption-wrap-v2 > div > div:nth-child(1) > div.jsx-1717967343.margin-t-4 > div > div.jsx-1043401508.jsx-723559856.jsx-1657608162.jsx-3887553297.editor > div > div > div"
+    await iframe.type(captionEntrySelector, caption, {
+        delay : TYPE_DELAY
+    })
 }
 
 async function uploadVideo(iframe : Frame, videoFile : string){
@@ -72,6 +70,8 @@ const postVideo = async(frame : Frame) =>{
     const button : ElementHandle | null = await frame.waitForSelector(buttonSelector) as ElementHandle;
     if(button){
         button.click();
+        console.log("video posted")
+        await delay(WAIT_DELAY)
     }else{
         throw new Error("Could not click post button")
     }
@@ -89,7 +89,6 @@ const inputDataAndPost = async (page : Page, videoFile : string, caption : strin
     }
     await page.pdf({path : './screenshots/inputtedData.pdf'});
     await postVideo(iframe);
-     
 } 
 
 
@@ -120,7 +119,7 @@ async function uploadToTikTok(cookiesFile : string, videoFile : string, caption 
 }
 
 /**
- * Run with "npm start username password filepath"
+ * Run with "npm start"
  */
 const run = async() =>{
     const cookiesFile = './src/cookies.json';

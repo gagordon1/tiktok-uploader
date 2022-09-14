@@ -4,16 +4,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
-const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
+const puppeteer_screen_recorder_1 = require("puppeteer-screen-recorder");
 const fs = require('fs').promises;
 const TIKTOKURL = "https://www.tiktok.com/upload";
+const TYPE_DELAY = 80;
+const WAIT_DELAY = 5000;
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 const visitTikTok = async (page) => {
     console.log("navigating to tiktok");
     await page.goto(TIKTOKURL);
-    await delay(5000);
+    await delay(WAIT_DELAY);
     await page.pdf({ path: './screenshots/tiktok.pdf' });
 };
 const setCookies = async (page, cookiesFile) => {
@@ -27,23 +29,19 @@ const initializePage = async (page) => {
         'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.39 Safari/537.36';
     await page.setUserAgent(userAgent);
     await page.setViewport({
-        width: 1920 + Math.floor(Math.random() * 100),
-        height: 3000 + Math.floor(Math.random() * 100),
+        width: 1300 + Math.floor(Math.random() * 100),
+        height: 800 + Math.floor(Math.random() * 100),
         deviceScaleFactor: 1,
         hasTouch: false,
-        isLandscape: false,
+        isLandscape: true,
         isMobile: false,
     });
 };
 async function setCaption(iframe, caption) {
-    const captionEntrySelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.caption-wrap-v2 > div > div:nth-child(1) > div.jsx-1717967343.margin-t-4 > div > div.jsx-1043401508.jsx-723559856.jsx-1657608162.jsx-3887553297.editor > div > div > div > div > div > div > span";
-    await iframe.evaluate((caption, selector) => {
-        let capitionSpan = document.querySelector(selector);
-        let c = document.createElement("span");
-        c.setAttribute("data-text", "true");
-        c.innerHTML = caption;
-        capitionSpan?.replaceChildren(c);
-    }, caption, captionEntrySelector);
+    const captionEntrySelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-2580397738.form-v2 > div.jsx-2580397738.caption-wrap-v2 > div > div:nth-child(1) > div.jsx-1717967343.margin-t-4 > div > div.jsx-1043401508.jsx-723559856.jsx-1657608162.jsx-3887553297.editor > div > div > div";
+    await iframe.type(captionEntrySelector, caption, {
+        delay: TYPE_DELAY
+    });
 }
 async function uploadVideo(iframe, videoFile) {
     const inputSelector = "#root > div > div > div > div > div.jsx-410242825.contents-v2 > div.jsx-410242825.uploader > div > input";
@@ -52,7 +50,7 @@ async function uploadVideo(iframe, videoFile) {
         await videoUpload.uploadFile(videoFile);
     }
     else {
-        console.log("Could not get element handle");
+        throw new Error("Could not get video upload element");
     }
 }
 const postVideo = async (frame) => {
@@ -61,9 +59,11 @@ const postVideo = async (frame) => {
     const button = await frame.waitForSelector(buttonSelector);
     if (button) {
         button.click();
+        console.log("video posted");
+        await delay(WAIT_DELAY);
     }
     else {
-        console.log("Could not find button");
+        throw new Error("Could not click post button");
     }
 };
 const inputDataAndPost = async (page, videoFile, caption) => {
@@ -73,6 +73,9 @@ const inputDataAndPost = async (page, videoFile, caption) => {
     if (iframe) {
         await setCaption(iframe, caption);
         await uploadVideo(iframe, videoFile);
+    }
+    else {
+        throw new Error("Could not get content frame");
     }
     await page.pdf({ path: './screenshots/inputtedData.pdf' });
     await postVideo(iframe);
@@ -87,11 +90,12 @@ async function uploadToTikTok(cookiesFile, videoFile, caption) {
     const browser = await puppeteer_extra_1.default.launch({
         defaultViewport: null,
         ignoreHTTPSErrors: true,
-        slowMo: 100
+        slowMo: 100,
+        headless: false
     });
     const page = await browser.newPage();
     await initializePage(page);
-    const recorder = new PuppeteerScreenRecorder(page);
+    const recorder = new puppeteer_screen_recorder_1.PuppeteerScreenRecorder(page);
     await recorder.start('./screenshots/recording.mp4');
     await setCookies(page, cookiesFile);
     await visitTikTok(page);
@@ -100,7 +104,7 @@ async function uploadToTikTok(cookiesFile, videoFile, caption) {
     await browser.close();
 }
 /**
- * Run with "npm start username password filepath"
+ * Run with "npm start"
  */
 const run = async () => {
     const cookiesFile = './src/cookies.json';
