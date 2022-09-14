@@ -1,5 +1,6 @@
 import json
 from content_pipeline.youtube_ops import search_youtube
+from content_pipeline.tiktok_ops import get_tiktoks
 
 PIPELINE_FILENAME = "pipeline.json"
 
@@ -52,6 +53,8 @@ def build_pipeline(topic : str, source : str, n : int, max_duration : int, api_k
     results = []
     if source == "youtube":
         results = search_youtube(api_key, topic, n, max_duration)
+    elif source == "tiktok":
+        results = get_tiktoks("topic", topic, n)
     set_pipeline_data(
         {
             "links" : results
