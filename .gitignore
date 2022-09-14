@@ -112,3 +112,5 @@ cookies.json
 .DS_Store
 
 __pycache__
+
+video_queue/
