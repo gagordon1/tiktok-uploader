@@ -3,7 +3,7 @@
 from pydoc_data.topics import topics
 
 
-class ContentPipleine:
+class ContentPipeline:
     """ Given a data source and search topic, makes a downloadable pipeline 
         of unique video links to pull from
     """

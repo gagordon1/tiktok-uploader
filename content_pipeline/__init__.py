@@ -1,1 +1,1 @@
-from content_pipeline.ContentPipeline import ContentPipleine
+from content_pipeline.ContentPipeline import ContentPipeline
