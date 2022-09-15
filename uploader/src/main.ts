@@ -3,7 +3,15 @@ import puppeteer from 'puppeteer-extra';
 import { Browser, ElementHandle, Page, Frame } from 'puppeteer';
 import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder';
 import fs from 'fs'
+/* tslint:disable:no-console */
+import { IgApiClient } from 'instagram-private-api';
+import { readFile } from 'fs';
+import { promisify } from 'util';
+import * as dotenv from 'dotenv' 
+dotenv.config()
+console.log(process.env)
 
+var ffmpeg = require('fluent-ffmpeg');
 const TIKTOKURL = "https://www.tiktok.com/upload"
 
 const TYPE_DELAY = 30
@@ -147,15 +155,51 @@ async function uploadToTikTok(cookiesFile : string, videoFile : string, caption 
 
 
 //UPLOAD TO REELS FUNCTIONS
-const uploadToReels = async (videoFile : string, caption : string) : Promise<void> =>{
+const uploadToReels = async (imageFile: string, videoFile : string, caption : string) : Promise<void> =>{
+    const readFileAsync = promisify(readFile);
 
+    const ig = new IgApiClient();
+
+    async function login() {
+        // basic login-procedure
+        if (process.env.IG_USERNAME && process.env.IG_PASSWORD){
+            ig.state.generateDevice(process.env.IG_USERNAME);
+            await ig.account.login(process.env.IG_USERNAME, process.env.IG_PASSWORD);
+        }else{
+            throw new Error("Password and Username not defined.")
+        }
+    }
+    await login();
+    const videoPath = videoFile;
+    const imagePath = imageFile;
+    new ffmpeg(videoPath).takeScreenshots({
+        count: 1,
+        timemarks: [ '2' ] // number of seconds
+        }, imagePath, function() {
+            console.log('screenshots were saved')
+        }
+    );
+
+    const publishResult = await ig.publish.video({
+        // read the file into a Buffer
+        video: await readFileAsync(videoPath),
+        coverImage: await readFileAsync(imagePath)
+        /*
+        this does also support:
+        caption (string),  ----+
+        usertags,          ----+----> See upload-photo.example.ts
+        location,          ----+
+        */
+    });
+
+    console.log(publishResult);
 }
 
 /**
  * Run with "npm start"
  */
 const run = async() =>{
-    const cookiesFile = './config/cookies.json';
+    
     const content_settings_string = fs.readFileSync("config/content_settings.json").toString()
     const content_settings = JSON.parse(content_settings_string);
     const caption = content_settings.caption
@@ -163,9 +207,11 @@ const run = async() =>{
     const videoFile = "./content/" + videoFiles.find((val) => val.endsWith(".mp4"));
     const destination = content_settings.destination
     if(destination == "tiktok"){
+        const cookiesFile = './config/cookies.json';
         await uploadToTikTok(cookiesFile, videoFile, caption);
     }else if (destination == "reels"){
-        await uploadToReels(videoFile, caption);
+        const imageFile = "./content/image.jpg"
+        await uploadToReels(imageFile, videoFile, caption);
     }
 }   
 
