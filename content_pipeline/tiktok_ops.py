@@ -1,5 +1,4 @@
 from typing import List
-from TikTokApi import TikTokApi
 import json
 
 
@@ -23,11 +22,11 @@ def get_tiktoks(by : str, value : str, n : int) -> List[str]:
     Returns:
         List[str]: array of tiktok ids
     """
-    verify_fp = get_verify_fp()
-    with TikTokApi(custom_verify_fp = verify_fp, use_test_endpoints=True, proxy="http://localhost:8888") as api:
-        for trending_video in api.search.videos("skiing"):
-            # Prints the author's username of the trending video.
-            print(trending_video)
-            print(trending_video.author.username)
+    # verify_fp = get_verify_fp()
+    # with TikTokApi(custom_verify_fp = verify_fp, use_test_endpoints=True, proxy="http://localhost:8888") as api:
+    #     for trending_video in api.search.videos("skiing"):
+    #         # Prints the author's username of the trending video.
+    #         print(trending_video)
+    #         print(trending_video.author.username)
     return []
 

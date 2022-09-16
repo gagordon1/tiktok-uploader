@@ -156,7 +156,7 @@ async function uploadToTikTok(cookiesFile : string, videoFile : string, caption 
 
 //UPLOAD TO REELS FUNCTIONS
 const uploadToReels = async (un : string, pw: string, imagePath: string, imageFilename : string,
-        videoFile : string, caption : string) : Promise<void> =>{
+        videoFile : string, caption : string, lat? : number, long? : number) : Promise<void> =>{
     const readFileAsync = promisify(readFile);
 
     const ig = new IgApiClient();
@@ -166,8 +166,10 @@ const uploadToReels = async (un : string, pw: string, imagePath: string, imageFi
         ig.state.generateDevice(un);
         await ig.account.login(un, pw);
     }
+    console.log("logging in.")
     await login();
     const videoPath = videoFile;
+    console.log("getting cover image.")
     new ffmpeg(videoPath).takeScreenshots({
             count: 1,
             timemarks: [ '2' ], // number of seconds
@@ -176,8 +178,15 @@ const uploadToReels = async (un : string, pw: string, imagePath: string, imageFi
             console.log('screenshots were saved')
         }
     );
-    let loc = await ig.search.location(40.7128, 74.0060)
+    let loc = undefined
+    if(lat && long){
+        console.log("getting location.")
+        loc = await ig.search.location(40.7128, 74.0060)
+        
+    }
     const location = loc? loc[0] : undefined
+    
+    console.log("publishing video.")
     const publishResult = await ig.publish.video({
         // read the file into a Buffer
         video: await readFileAsync(videoPath),
@@ -216,7 +225,9 @@ const run = async() =>{
             imagePath, 
             imageFilename,
             videoFile, 
-            caption
+            caption,
+            content_settings.latitude,
+            content_settings.longitude
         );
     }
 }   
