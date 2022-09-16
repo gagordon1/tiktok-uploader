@@ -133,7 +133,7 @@ async function uploadToTikTok(cookiesFile, videoFile, caption) {
     await browser.close();
 }
 //UPLOAD TO REELS FUNCTIONS
-const uploadToReels = async (un, pw, imagePath, videoFile, caption) => {
+const uploadToReels = async (un, pw, imagePath, imageFilename, videoFile, caption) => {
     const readFileAsync = (0, util_1.promisify)(fs_2.readFile);
     const ig = new instagram_private_api_1.IgApiClient();
     async function login() {
@@ -143,7 +143,6 @@ const uploadToReels = async (un, pw, imagePath, videoFile, caption) => {
     }
     await login();
     const videoPath = videoFile;
-    const imageFilename = "thumbnail.jpg";
     new ffmpeg(videoPath).takeScreenshots({
         count: 1,
         timemarks: ['2'],
@@ -151,18 +150,21 @@ const uploadToReels = async (un, pw, imagePath, videoFile, caption) => {
     }, imagePath, function () {
         console.log('screenshots were saved');
     });
+    let loc = await ig.search.location(40.7128, 74.0060);
+    const location = loc ? loc[0] : undefined;
     const publishResult = await ig.publish.video({
         // read the file into a Buffer
         video: await readFileAsync(videoPath),
-        coverImage: await readFileAsync(imagePath + "/" + imageFilename)
-        /*
-        this does also support:
-        caption (string),  ----+
-        usertags,          ----+----> See upload-photo.example.ts
-        location,          ----+
-        */
+        coverImage: await readFileAsync(imagePath + "/" + imageFilename),
+        caption: caption,
+        location: location
     });
-    console.log(publishResult);
+    if (publishResult["status"] == "ok") {
+        console.log("video posted.");
+    }
+    else {
+        console.log(publishResult);
+    }
 };
 /**
  * Run with "npm start"
@@ -180,7 +182,8 @@ const run = async () => {
     }
     else if (destination == "reels") {
         const imagePath = "cover_images";
-        await uploadToReels(content_settings.ig_username, content_settings.ig_password, imagePath, videoFile, caption);
+        const imageFilename = "thumbnail.jpg";
+        await uploadToReels(content_settings.ig_username, content_settings.ig_password, imagePath, imageFilename, videoFile, caption);
     }
 };
 run();

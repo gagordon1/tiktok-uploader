@@ -155,7 +155,8 @@ async function uploadToTikTok(cookiesFile : string, videoFile : string, caption 
 
 
 //UPLOAD TO REELS FUNCTIONS
-const uploadToReels = async (un : string, pw: string, imagePath: string, videoFile : string, caption : string) : Promise<void> =>{
+const uploadToReels = async (un : string, pw: string, imagePath: string, imageFilename : string,
+        videoFile : string, caption : string) : Promise<void> =>{
     const readFileAsync = promisify(readFile);
 
     const ig = new IgApiClient();
@@ -167,7 +168,6 @@ const uploadToReels = async (un : string, pw: string, imagePath: string, videoFi
     }
     await login();
     const videoPath = videoFile;
-    const imageFilename = "thumbnail.jpg"
     new ffmpeg(videoPath).takeScreenshots({
             count: 1,
             timemarks: [ '2' ], // number of seconds
@@ -176,20 +176,21 @@ const uploadToReels = async (un : string, pw: string, imagePath: string, videoFi
             console.log('screenshots were saved')
         }
     );
-
+    let loc = await ig.search.location(40.7128, 74.0060)
+    const location = loc? loc[0] : undefined
     const publishResult = await ig.publish.video({
         // read the file into a Buffer
         video: await readFileAsync(videoPath),
-        coverImage: await readFileAsync(imagePath + "/" + imageFilename)
-        /*
-        this does also support:
-        caption (string),  ----+
-        usertags,          ----+----> See upload-photo.example.ts
-        location,          ----+
-        */
+        coverImage: await readFileAsync(imagePath + "/" + imageFilename),
+        caption : caption,
+        location : location
     });
 
-    console.log(publishResult);
+    if(publishResult["status"] == "ok"){
+        console.log("video posted.")
+    }else{
+        console.log(publishResult)
+    }
 }
 
 /**
@@ -208,10 +209,12 @@ const run = async() =>{
         await uploadToTikTok(cookiesFile, videoFile, caption);
     }else if (destination == "reels"){
         const imagePath = "cover_images"
+        const imageFilename = "thumbnail.jpg"
         await uploadToReels(
             content_settings.ig_username, 
             content_settings.ig_password, 
             imagePath, 
+            imageFilename,
             videoFile, 
             caption
         );
