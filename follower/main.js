@@ -40,17 +40,39 @@ function followUser(ig, pk) {
  *      current strategy: search tag feed for a topic
  *      for aribitrarily selected posts, randomly choose some users to follow
  * @param ig logged in instagram client
- * @param topic topic to guide user search
- * @param n number of users to return
+ * @param username user to sample followers from
+ * @param n maximum number of users to return
  * @returns list of user ids that are interested in the topic
  */
-function findUsers(ig, topic, n) {
+function findUsers(ig, username, n) {
     return __awaiter(this, void 0, void 0, function* () {
-        const result = yield (yield ig.feed.tag(topic).items()).map(tag => tag.user.pk);
-        return result;
+        const out = [];
+        const id = yield ig.user.getIdByUsername(username);
+        const followers = ig.feed.accountFollowers(id);
+        let sampleFollowers = (yield followers.items()).filter((_, index) => index % 5 == 0);
+        for (const user of sampleFollowers) {
+            out.push(user.pk);
+            if (out.length >= n) {
+                return out;
+            }
+        }
+        return out;
     });
 }
-const run = (un, pw, topic, n) => __awaiter(void 0, void 0, void 0, function* () {
+// /**
+//  * Strategy which takes a topic and returns a batch of users to follow based on it
+//  *      current strategy: search tag feed for a topic
+//  *      for aribitrarily selected posts, randomly choose some users to follow
+//  * @param ig logged in instagram client
+//  * @param topic topic to guide user search
+//  * @param n number of users to return
+//  * @returns list of user ids that are interested in the topic
+//  */
+// async function findUsers(ig : IgApiClient, topic : string, n : number) : Promise<number[]>{
+//     const result = await (await ig.feed.tag(topic).items()).map(tag => tag.user.pk)
+//     return result;
+// }
+const run = (un, pw, user, n) => __awaiter(void 0, void 0, void 0, function* () {
     const ig = new instagram_private_api_1.IgApiClient();
     function login() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -61,12 +83,12 @@ const run = (un, pw, topic, n) => __awaiter(void 0, void 0, void 0, function* ()
         });
     }
     yield login();
-    const users = yield findUsers(ig, topic, n);
+    const users = yield findUsers(ig, user, n);
     console.log(users);
     for (const user of users) {
-        yield delay(Math.min(Math.random() * ONE_HOUR, TEN_MINUTES));
-        console.log("following user", user);
         yield followUser(ig, user);
+        console.log("following user", user);
+        yield delay(Math.max(Math.random() * ONE_HOUR, TEN_MINUTES));
     }
 });
 run(process_1.argv[2], process_1.argv[3], process_1.argv[4], parseInt(process_1.argv[5]));

@@ -14,7 +14,7 @@ if __name__ == "__main__":
         by = pipeline_settings["by"]
         value = pipeline_settings["value"]
         source = pipeline_settings["source"]
-        n = pipeline_settings["n"]
+        n = pipeline_settings["n"] #failed when n = 50
         max_duration = pipeline_settings["max_duration"]
         build_pipeline(by, value, source, n, max_duration, YOUTUBE_SEARCH_API_KEY)
 
