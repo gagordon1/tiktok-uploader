@@ -1,9 +1,9 @@
 import json
 from content_pipeline.youtube_ops import search_youtube
-from content_pipeline.tiktok_ops import get_tiktoks
+from content_pipeline.tiktok_ops import get_tiktoks, get_cookie
 
 PIPELINE_FILENAME = "pipeline.json"
-
+COOKIE_PATH = "./config/cookies.json"
 
 def get_pipeline_data() -> dict:
     with open(PIPELINE_FILENAME, "r") as open_file:
@@ -41,23 +41,32 @@ def get_next() -> str:
     set_pipeline_data(data)
     return out
 
-def build_pipeline(topic : str, source : str, n : int, max_duration : int, api_key : str):
+def build_pipeline(by : str, value : str, source : str, n : int, max_duration : int, api_key : str):
     """Given a source, topic, number of links, max duration and an api key 
         build the pipeline
 
     Args:
+        by (str): topic (for youtube) | hashtag (for tiktok) | trending (for tiktok) param to query by 
+        value (str): 
+            valid hashtag if by == hashtag e.g.'#hashtag' 
+            any string if by == topic,
+            any value if by == trending 
         n (int): number of links to add to the pipeline
-        max_duration (int): max duration for videos to be returned
-        api_key (str) : api key for specified pipeline
+        max_duration (int): max duration for videos to be returned (only for youtube)
+        api_key (str) : api key for specified pipeline (only required for youtube)
     """
-    results = []
-    if source == "youtube":
-        results = search_youtube(api_key, topic, n, max_duration)
-    elif source == "tiktok":
-        results = get_tiktoks("topic", topic, n)
+    pipeline = []
+    if source == "youtube" and by == "topic":
+        pipeline = search_youtube(api_key, value, n, max_duration)
+    elif source == "tiktok" and (by == "hashtag" or by == "trending"):
+        cookie = get_cookie(COOKIE_PATH)
+        pipeline = get_tiktoks(by, value, n, cookie)
+    else:
+        raise Exception("Incorrect inputs")
+    
     set_pipeline_data(
         {
-            "links" : results
+            "links" : pipeline
         }
     )
 

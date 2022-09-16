@@ -133,7 +133,7 @@ async function uploadToTikTok(cookiesFile, videoFile, caption) {
     await browser.close();
 }
 //UPLOAD TO REELS FUNCTIONS
-const uploadToReels = async (un, pw, imagePath, imageFilename, videoFile, caption) => {
+const uploadToReels = async (un, pw, imagePath, imageFilename, videoFile, caption, lat, long) => {
     const readFileAsync = (0, util_1.promisify)(fs_2.readFile);
     const ig = new instagram_private_api_1.IgApiClient();
     async function login() {
@@ -141,8 +141,10 @@ const uploadToReels = async (un, pw, imagePath, imageFilename, videoFile, captio
         ig.state.generateDevice(un);
         await ig.account.login(un, pw);
     }
+    console.log("logging in.");
     await login();
     const videoPath = videoFile;
+    console.log("getting cover image.");
     new ffmpeg(videoPath).takeScreenshots({
         count: 1,
         timemarks: ['2'],
@@ -150,8 +152,13 @@ const uploadToReels = async (un, pw, imagePath, imageFilename, videoFile, captio
     }, imagePath, function () {
         console.log('screenshots were saved');
     });
-    let loc = await ig.search.location(40.7128, 74.0060);
+    let loc = undefined;
+    if (lat && long) {
+        console.log("getting location.");
+        loc = await ig.search.location(40.7128, 74.0060);
+    }
     const location = loc ? loc[0] : undefined;
+    console.log("publishing video.");
     const publishResult = await ig.publish.video({
         // read the file into a Buffer
         video: await readFileAsync(videoPath),
@@ -183,7 +190,7 @@ const run = async () => {
     else if (destination == "reels") {
         const imagePath = "cover_images";
         const imageFilename = "thumbnail.jpg";
-        await uploadToReels(content_settings.ig_username, content_settings.ig_password, imagePath, imageFilename, videoFile, caption);
+        await uploadToReels(content_settings.ig_username, content_settings.ig_password, imagePath, imageFilename, videoFile, caption, content_settings.latitude, content_settings.longitude);
     }
 };
 run();
