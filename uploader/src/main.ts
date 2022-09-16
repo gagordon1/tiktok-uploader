@@ -170,7 +170,7 @@ const uploadToReels = async (un : string, pw: string, imagePath: string, imageFi
     await login();
     const videoPath = videoFile;
     console.log("getting cover image.")
-    new ffmpeg(videoPath).takeScreenshots({
+    await new ffmpeg(videoPath).takeScreenshots({
             count: 1,
             timemarks: [ '2' ], // number of seconds
             filename : imageFilename
