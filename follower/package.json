@@ -1,0 +1,15 @@
+{
+  "name": "follower",
+  "version": "1.0.0",
+  "description": "defines a strategy for following users on instagram",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Garrett G",
+  "license": "ISC",
+  "dependencies": {
+    "instagram-private-api": "^1.45.3",
+    "typescript": "^4.8.3"
+  }
+}
