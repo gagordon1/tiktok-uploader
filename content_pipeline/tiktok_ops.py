@@ -48,8 +48,8 @@ def get_tiktoks(by : str, value : str, n : int, cookie : dict) -> List[str]:
         elif by == "hashtag":
             vids = api.getVideosByHashTag(value, count=n)
             return [vid["id"] for vid in vids["itemList"]]
-    except:
-        print("Error getting tiktok ids")
+    except Exception as e:
+        print(e)
     return []
 if __name__ == "__main__":
     COOKIE_PATH = "./config/cookies.json"
