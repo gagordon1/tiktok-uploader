@@ -1,27 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -33,10 +10,9 @@ const fs_1 = __importDefault(require("fs"));
 const instagram_private_api_1 = require("instagram-private-api");
 const fs_2 = require("fs");
 const util_1 = require("util");
-const dotenv = __importStar(require("dotenv"));
-dotenv.config();
-console.log(process.env);
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 var ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
 const TIKTOKURL = "https://www.tiktok.com/upload";
 const TYPE_DELAY = 30;
 const WAIT_DELAY = 5000;
@@ -157,32 +133,28 @@ async function uploadToTikTok(cookiesFile, videoFile, caption) {
     await browser.close();
 }
 //UPLOAD TO REELS FUNCTIONS
-const uploadToReels = async (imageFile, videoFile, caption) => {
+const uploadToReels = async (un, pw, imagePath, videoFile, caption) => {
     const readFileAsync = (0, util_1.promisify)(fs_2.readFile);
     const ig = new instagram_private_api_1.IgApiClient();
     async function login() {
         // basic login-procedure
-        if (process.env.IG_USERNAME && process.env.IG_PASSWORD) {
-            ig.state.generateDevice(process.env.IG_USERNAME);
-            await ig.account.login(process.env.IG_USERNAME, process.env.IG_PASSWORD);
-        }
-        else {
-            throw new Error("Password and Username not defined.");
-        }
+        ig.state.generateDevice(un);
+        await ig.account.login(un, pw);
     }
     await login();
     const videoPath = videoFile;
-    const imagePath = imageFile;
+    const imageFilename = "thumbnail.jpg";
     new ffmpeg(videoPath).takeScreenshots({
         count: 1,
-        timemarks: ['2'] // number of seconds
+        timemarks: ['2'],
+        filename: imageFilename
     }, imagePath, function () {
         console.log('screenshots were saved');
     });
     const publishResult = await ig.publish.video({
         // read the file into a Buffer
         video: await readFileAsync(videoPath),
-        coverImage: await readFileAsync(imagePath)
+        coverImage: await readFileAsync(imagePath + "/" + imageFilename)
         /*
         this does also support:
         caption (string),  ----+
@@ -207,8 +179,8 @@ const run = async () => {
         await uploadToTikTok(cookiesFile, videoFile, caption);
     }
     else if (destination == "reels") {
-        const imageFile = "./content/image.jpg";
-        await uploadToReels(imageFile, videoFile, caption);
+        const imagePath = "cover_images";
+        await uploadToReels(content_settings.ig_username, content_settings.ig_password, imagePath, videoFile, caption);
     }
 };
 run();

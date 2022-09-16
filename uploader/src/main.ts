@@ -7,11 +7,11 @@ import fs from 'fs'
 import { IgApiClient } from 'instagram-private-api';
 import { readFile } from 'fs';
 import { promisify } from 'util';
-import * as dotenv from 'dotenv' 
-dotenv.config()
-console.log(process.env)
-
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 var ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
+
+
 const TIKTOKURL = "https://www.tiktok.com/upload"
 
 const TYPE_DELAY = 30
@@ -155,26 +155,23 @@ async function uploadToTikTok(cookiesFile : string, videoFile : string, caption 
 
 
 //UPLOAD TO REELS FUNCTIONS
-const uploadToReels = async (imageFile: string, videoFile : string, caption : string) : Promise<void> =>{
+const uploadToReels = async (un : string, pw: string, imagePath: string, videoFile : string, caption : string) : Promise<void> =>{
     const readFileAsync = promisify(readFile);
 
     const ig = new IgApiClient();
 
     async function login() {
         // basic login-procedure
-        if (process.env.IG_USERNAME && process.env.IG_PASSWORD){
-            ig.state.generateDevice(process.env.IG_USERNAME);
-            await ig.account.login(process.env.IG_USERNAME, process.env.IG_PASSWORD);
-        }else{
-            throw new Error("Password and Username not defined.")
-        }
+        ig.state.generateDevice(un);
+        await ig.account.login(un, pw);
     }
     await login();
     const videoPath = videoFile;
-    const imagePath = imageFile;
+    const imageFilename = "thumbnail.jpg"
     new ffmpeg(videoPath).takeScreenshots({
-        count: 1,
-        timemarks: [ '2' ] // number of seconds
+            count: 1,
+            timemarks: [ '2' ], // number of seconds
+            filename : imageFilename
         }, imagePath, function() {
             console.log('screenshots were saved')
         }
@@ -183,7 +180,7 @@ const uploadToReels = async (imageFile: string, videoFile : string, caption : st
     const publishResult = await ig.publish.video({
         // read the file into a Buffer
         video: await readFileAsync(videoPath),
-        coverImage: await readFileAsync(imagePath)
+        coverImage: await readFileAsync(imagePath + "/" + imageFilename)
         /*
         this does also support:
         caption (string),  ----+
@@ -210,8 +207,14 @@ const run = async() =>{
         const cookiesFile = './config/cookies.json';
         await uploadToTikTok(cookiesFile, videoFile, caption);
     }else if (destination == "reels"){
-        const imageFile = "./content/image.jpg"
-        await uploadToReels(imageFile, videoFile, caption);
+        const imagePath = "cover_images"
+        await uploadToReels(
+            content_settings.ig_username, 
+            content_settings.ig_password, 
+            imagePath, 
+            videoFile, 
+            caption
+        );
     }
 }   
 
