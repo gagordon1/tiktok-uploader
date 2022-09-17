@@ -5,9 +5,11 @@ export type ContentStrategy = "user-likes" | "search"
 export interface ContentSettings{
     /**name of content pipeline */
     name : string,
+    /**path to the pipeline file */
+    pipeline_file : string,
     /**initial size of pipeline */
     n : number,
-    /**strategy for pulling in content : user-likes | search */
+    /**strategy for pulling in content : user-likes | topic */
     strategy : ContentStrategy,
     /**params for specified strategy */
     strategyParams : string[],
@@ -19,14 +21,14 @@ export interface ContentSettings{
     destination : ContentDestination,
     /**caption for destination post */
     caption : string,
-    /**name of cookies file if pulling from youtube */
-    cookies_file? : string,
-    /**username for instagram if destination == reels */
-    ig_username? : string,
-    /**password for instagram if destination == reels */
-    ig_password? : string,
-    /**latitude of post if destination == reels and location desired */
-    latitude? : number,
-    /**longitude of post if destination == reels and location desired */
-    longitude? : number
+    /**name of cookies file (required if source == youtube) */
+    cookies_file : string,
+    /**username for instagram (required if destination == reels) */
+    ig_username : string,
+    /**password for instagram (required if destination == reels) */
+    ig_password : string,
+    /**latitude of post (required if destination == reels and location desired) */
+    latitude : number,
+    /**longitude of (required if destination == reels and location desired) */
+    longitude : number
 }

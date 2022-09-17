@@ -1,5 +1,6 @@
-pandas==1.3.5
+pandas==1.4.2
 python-dotenv==0.21.0
 requests==2.27.1
-PyTikTokApi==0.0.5
+PyTikTokAPI==0.0.5
+typing_extensions==3.7.4.3
 youtube_dl==2021.12.17

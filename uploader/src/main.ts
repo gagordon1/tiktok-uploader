@@ -7,6 +7,7 @@ import fs from 'fs'
 import { IgApiClient } from 'instagram-private-api';
 import { readFile } from 'fs';
 import { promisify } from 'util';
+import { ContentSettings } from './interfaces';
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 var ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegPath);
@@ -206,32 +207,29 @@ const uploadToReels = async (un : string, pw: string, imagePath: string, imageFi
  * Run with "npm start"
  */
 const run = async(settings : ContentSettings) =>{
-    
-    const content_settings_string = fs.readFileSync("config/content_settings.json").toString()
-    const content_settings = JSON.parse(content_settings_string);
-    const caption = content_settings.caption
-    const videoFiles : string[] = fs.readdirSync("./content");
-    const videoFile = "./content/" + videoFiles.find((val) => val.endsWith(".mp4"));
-    const destination = content_settings.destination
+    const caption = settings.caption;
+    const videoFile = "./content/" + settings.name + ".mp4";
+    const destination = settings.destination
     if(destination == "tiktok"){
         const cookiesFile = './config/cookies.json';
         await uploadToTikTok(cookiesFile, videoFile, caption);
     }else if (destination == "reels"){
         const imagePath = "cover_images"
-        const imageFilename = "thumbnail.jpg"
+        const imageFilename = settings.name + ".jpg"
         await uploadToReels(
-            content_settings.ig_username, 
-            content_settings.ig_password, 
+            settings.ig_username, 
+            settings.ig_password, 
             imagePath, 
             imageFilename,
             videoFile, 
             caption,
-            content_settings.latitude,
-            content_settings.longitude
+            settings.latitude,
+            settings.longitude
         );
     }
 }   
-
-run();
+const contentSettingsString = fs.readFileSync("config/content-settings.json").toString()
+const contentSettings = JSON.parse(contentSettingsString) as ContentSettings;
+run(contentSettings);
        
 

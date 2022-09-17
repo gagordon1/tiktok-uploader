@@ -83,8 +83,8 @@ const run = async (settings : FollowSettings) =>{
     
     console.log(users);
     for (const user of users){
-        await followUser(ig, user);
         console.log("following user", user);
+        await followUser(ig, user);
         await delay(Math.max(Math.random()*ONE_HALF_HOUR, FIVE_MINUTES));
     }
 }

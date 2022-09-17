@@ -1,6 +1,6 @@
 from typing import List
 import json
-from TikTokAPI import TikTokAPI
+from TikTokApi import TikTokAPI
 
 
 def get_cookie(cookie_file_path : str) -> dict:
@@ -23,11 +23,11 @@ def get_cookie(cookie_file_path : str) -> dict:
                 cookie["tt_webid"] = c["value"]
         return cookie
 
-def get_tiktoks(by : str, value : str, n : int, cookie : dict) -> List[str]:
+def get_tiktoks(strategy : str, value : str, n : int, cookie : dict) -> List[str]:
     """Gets tiktoks by topic or account
 
     Args:
-        by (str): hashtag | trending - whether to search by account or a topic
+        strategy (str): hashtag | trending - whether to search by account or a topic
         value (str): value to search by 
             '#string' if hashtag 
             None if searching by trending
@@ -38,20 +38,23 @@ def get_tiktoks(by : str, value : str, n : int, cookie : dict) -> List[str]:
         List[str]: array of tiktok ids
     """
     api = TikTokAPI(cookie=cookie)
-    try:
-        if by == "trending":
-            vids = api.getTrending(count=n)
-            return [vid["id"] for vid in vids["items"]]
-        # elif by == "user":
-        #     vids = api.getVideosByUserName(value)
-        #     return [vid["id"] for vid in vids["itemList"]]
-        elif by == "hashtag":
-            vids = api.getVideosByHashTag(value, count=n)
-            return [vid["id"] for vid in vids["itemList"]]
-    except Exception as e:
-        print(e)
+    # try:
+    if strategy == "trending":
+        vids = api.getTrending(count=n)
+        return [vid["id"] for vid in vids["items"]]
+    elif strategy == "user-likes":
+        print(value)
+        info = api.getUserByName(value)
+        print(info)
+        # vids = api.getLikesByUserName(value)
+        # print(vids)
+        # return [vid["id"] for vid in vids["itemList"]]
+    elif strategy == "hashtag":
+        vids = api.getVideosByHashTag(value, count=n)
+        return [vid["id"] for vid in vids["itemList"]]
+    # except Exception as e:
+    #     print(e)
     return []
 if __name__ == "__main__":
-    COOKIE_PATH = "./config/cookies.json"
-    toks = get_tiktoks("hashtag", "#ski", 5, get_cookie(COOKIE_PATH))
+    pass
 

@@ -1,6 +1,7 @@
 import json
 from content_pipeline.youtube_ops import search_youtube
 from content_pipeline.tiktok_ops import get_tiktoks, get_cookie
+from content_pipeline.ContentSettings import ContentSettings
 
 def get_pipeline_data(pipeline_file : str) -> dict:
     with open(pipeline_file, "r") as open_file:
@@ -8,7 +9,7 @@ def get_pipeline_data(pipeline_file : str) -> dict:
     return pipeline
 
 def set_pipeline_data(pipeline_file : str, data : dict):
-    with open(pipeline_file, "w") as open_file:
+    with open(pipeline_file, "w+") as open_file: #create new pipeline if it doesn't exist
         json.dump(data, open_file)
 
 
@@ -35,41 +36,39 @@ def get_next(pipeline_file : str) -> str:
     links = data["links"]
     out = links.pop(0)
     data["links"] = links
-    set_pipeline_data(data)
+    set_pipeline_data(pipeline_file, data)
     return out
 
 def build_pipeline(
-        pipeline_file : str, 
-        by : str, 
-        value : str, 
-        source : str, 
-        n : int, 
-        max_duration : int, 
-        api_key : str
+        settings : ContentSettings
     ):
     """Given a source, topic, number of links, max duration and an api key 
         build the pipeline
 
     Args:
-        by (str): topic (for youtube) | hashtag (for tiktok) | trending (for tiktok) param to query by 
-        value (str): 
-            valid hashtag if by == hashtag e.g.'#hashtag' 
-            any string if by == topic,
-            any value if by == trending 
-        n (int): number of links to add to the pipeline
-        max_duration (int): max duration for videos to be returned (only for youtube)
-        api_key (str) : api key for specified pipeline (only required for youtube)
+        settings (ContentSettings): settings object
     """
     pipeline = []
-    if source == "youtube" and by == "topic":
-        pipeline = search_youtube(api_key, value, n, max_duration)
-    elif source == "tiktok" and (by == "hashtag" or by == "trending"):
-        cookie = get_cookie(COOKIE_PATH)
-        pipeline = get_tiktoks(by, value, n, cookie)
+    if settings["source"] == "youtube":
+        pipeline = search_youtube(
+            settings["api_key"], 
+            settings["strategyParams"][0], #topic
+            settings["n"], 
+            settings["max_duration"]
+        )
+    elif settings["source"] == "tiktok":
+        cookie = get_cookie(settings["cookies_file"])
+        pipeline = get_tiktoks(
+            settings["strategy"], 
+            settings["strategyParams"][0], 
+            settings["n"], 
+            cookie
+        )
     else:
         raise Exception("Incorrect inputs")
     
     set_pipeline_data(
+        settings["pipeline_file"],
         {
             "links" : pipeline
         }
