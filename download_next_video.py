@@ -2,7 +2,7 @@ import youtube_dl
 from content_pipeline import ContentPipeline as cp
 from content_pipeline.tiktok_ops import get_cookie
 import json
-from content_pipeline.modules.PyTikTokAPI import TikTokAPI
+from PyTikTokAPI import TikTokAPI
 
 
 def download_youtube_video(link: str, filename: str):
