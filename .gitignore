@@ -121,10 +121,10 @@ pipeline.json
 
 tiktok_download_cookie.json
 
-content_settings.json
+content-settings.json
 
 cover_images
 
 tmp
 
-follow_settings.json
+follow-settings.json

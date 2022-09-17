@@ -205,7 +205,7 @@ const uploadToReels = async (un : string, pw: string, imagePath: string, imageFi
 /**
  * Run with "npm start"
  */
-const run = async() =>{
+const run = async(settings : ContentSettings) =>{
     
     const content_settings_string = fs.readFileSync("config/content_settings.json").toString()
     const content_settings = JSON.parse(content_settings_string);
