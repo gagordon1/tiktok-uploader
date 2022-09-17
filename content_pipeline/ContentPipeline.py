@@ -2,30 +2,27 @@ import json
 from content_pipeline.youtube_ops import search_youtube
 from content_pipeline.tiktok_ops import get_tiktoks, get_cookie
 
-PIPELINE_FILENAME = "pipeline.json"
-COOKIE_PATH = "./config/cookies.json"
-
-def get_pipeline_data() -> dict:
-    with open(PIPELINE_FILENAME, "r") as open_file:
+def get_pipeline_data(pipeline_file : str) -> dict:
+    with open(pipeline_file, "r") as open_file:
         pipeline = json.load(open_file)
     return pipeline
 
-def set_pipeline_data(data : dict):
-    with open(PIPELINE_FILENAME, "w") as open_file:
+def set_pipeline_data(pipeline_file : str, data : dict):
+    with open(pipeline_file, "w") as open_file:
         json.dump(data, open_file)
 
 
-def has_next() -> bool:
+def has_next(pipeline_file : str) -> bool:
     """Checks if the content pipeline is empty
 
     Returns:
         bool: true if there are links in the pipeline false otherwise
     """
-    if len(get_pipeline_data()["links"]) > 0: return True
+    if len(get_pipeline_data(pipeline_file)["links"]) > 0: return True
     return False
     
 
-def get_next() -> str: 
+def get_next(pipeline_file : str) -> str: 
     """Gets the next link in the pipeline
 
     Returns:
@@ -34,14 +31,22 @@ def get_next() -> str:
     Throws:
         Exception: runtime exception if pipeline is empty
     """
-    data = get_pipeline_data()
+    data = get_pipeline_data(pipeline_file)
     links = data["links"]
     out = links.pop(0)
     data["links"] = links
     set_pipeline_data(data)
     return out
 
-def build_pipeline(by : str, value : str, source : str, n : int, max_duration : int, api_key : str):
+def build_pipeline(
+        pipeline_file : str, 
+        by : str, 
+        value : str, 
+        source : str, 
+        n : int, 
+        max_duration : int, 
+        api_key : str
+    ):
     """Given a source, topic, number of links, max duration and an api key 
         build the pipeline
 

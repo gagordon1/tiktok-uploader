@@ -1,9 +1,10 @@
 import { IgApiClient } from 'instagram-private-api';
-import { argv } from "process"
+import fs from 'fs';
+import { FollowSettings } from './interfaces';
 
 
-const TEN_MINUTES = 600000
-const ONE_HOUR = TEN_MINUTES * 6;
+const FIVE_MINUTES = 300000
+const ONE_HALF_HOUR = FIVE_MINUTES * 6;
 
 function delay(ms: number) : Promise<void> {
     return new Promise( resolve => setTimeout(resolve, ms) );
@@ -26,15 +27,14 @@ async function followUser(ig : IgApiClient, pk : number) : Promise<boolean> {
 }
 
 /**
- * Strategy which takes a topic and returns a batch of users to follow based on it
- *      current strategy: search tag feed for a topic
- *      for aribitrarily selected posts, randomly choose some users to follow
+ * Strategy which takes a user and returns a batch of users to follow based on it
+ *      current strategy: pick a user and sample from their followers
  * @param ig logged in instagram client
- * @param username user to sample followers from
  * @param n maximum number of users to return
+ * @param username user to sample followers from
  * @returns list of user ids that are interested in the topic
  */
- async function findUsers(ig : IgApiClient, username : string, n : number) : Promise<number[]>{
+ async function findUsersByUsernameFollowers(ig : IgApiClient, n : number, username : string ) : Promise<number[]>{
         const out = []
         const id = await ig.user.getIdByUsername(username)
         const followers = ig.feed.accountFollowers(id);
@@ -46,40 +46,52 @@ async function followUser(ig : IgApiClient, pk : number) : Promise<boolean> {
         return out;
     }
 
-// /**
-//  * Strategy which takes a topic and returns a batch of users to follow based on it
-//  *      current strategy: search tag feed for a topic
-//  *      for aribitrarily selected posts, randomly choose some users to follow
-//  * @param ig logged in instagram client
-//  * @param topic topic to guide user search
-//  * @param n number of users to return
-//  * @returns list of user ids that are interested in the topic
-//  */
-// async function findUsers(ig : IgApiClient, topic : string, n : number) : Promise<number[]>{
-//     const result = await (await ig.feed.tag(topic).items()).map(tag => tag.user.pk)
-//     return result;
-// }
+/**
+ * Strategy which takes a topic and returns a batch of users to follow based on it
+ *      current strategy: search tag feed for a topic
+ *      for aribitrarily selected posts, randomly choose some users to follow
+ * @param ig logged in instagram client
+ * @param n number of users to return
+ * @param topic topic to guide user search
+ * @returns list of user ids that are interested in the topic
+ */
+async function findUsersByHashTag(ig : IgApiClient, n : number, topic : string) : Promise<number[]>{
+    const result = (await ig.feed.tag(topic).items()).map(tag => tag.user.pk)
+    return result;
+}
 
 
-const run = async (un : string, pw: string, user : string, n : number) =>{
+const run = async (settings : FollowSettings) =>{
     const ig = new IgApiClient();
     async function login() {
         // basic login-procedure
-        console.log(un)
-        ig.state.generateDevice(un);
+        console.log(settings.username)
+        ig.state.generateDevice(settings.username);
         
-        await ig.account.login(un, pw);
+        await ig.account.login(settings.username, settings.password);
     }
 
     await login();
-    const users = await findUsers(ig, user, n)
+    let users = []
+    if (settings.strategy == "findUsersByUsernameFollowers"){
+        users = await findUsersByUsernameFollowers(ig, settings.n, settings.strategyParams[0])
+    }else if (settings.strategy == "findUsersByHashTagHashtag"){
+        users = await findUsersByHashTag(ig, settings.n, settings.strategyParams[0])
+    }else{
+        throw new Error("Incorrect strategy input setting");
+    }
+    
     console.log(users);
     for (const user of users){
         await followUser(ig, user);
         console.log("following user", user);
-        await delay(Math.max(Math.random()*ONE_HOUR, TEN_MINUTES));
+        await delay(Math.max(Math.random()*ONE_HALF_HOUR, FIVE_MINUTES));
     }
 }
 
-run(argv[2], argv[3], argv[4], parseInt(argv[5]));
+
+const followSettings = fs.readFileSync("./config/follow-settings.json").toString();
+const settings = JSON.parse(followSettings) as FollowSettings;
+console.log(settings);
+run(settings);
 

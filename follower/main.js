@@ -8,11 +8,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const instagram_private_api_1 = require("instagram-private-api");
-const process_1 = require("process");
-const TEN_MINUTES = 600000;
-const ONE_HOUR = TEN_MINUTES * 6;
+const fs_1 = __importDefault(require("fs"));
+const FIVE_MINUTES = 300000;
+const ONE_HALF_HOUR = FIVE_MINUTES * 6;
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -36,15 +39,14 @@ function followUser(ig, pk) {
     });
 }
 /**
- * Strategy which takes a topic and returns a batch of users to follow based on it
- *      current strategy: search tag feed for a topic
- *      for aribitrarily selected posts, randomly choose some users to follow
+ * Strategy which takes a user and returns a batch of users to follow based on it
+ *      current strategy: pick a user and sample from their followers
  * @param ig logged in instagram client
- * @param username user to sample followers from
  * @param n maximum number of users to return
+ * @param username user to sample followers from
  * @returns list of user ids that are interested in the topic
  */
-function findUsers(ig, username, n) {
+function findUsersByUsernameFollowers(ig, n, username) {
     return __awaiter(this, void 0, void 0, function* () {
         const out = [];
         const id = yield ig.user.getIdByUsername(username);
@@ -59,36 +61,50 @@ function findUsers(ig, username, n) {
         return out;
     });
 }
-// /**
-//  * Strategy which takes a topic and returns a batch of users to follow based on it
-//  *      current strategy: search tag feed for a topic
-//  *      for aribitrarily selected posts, randomly choose some users to follow
-//  * @param ig logged in instagram client
-//  * @param topic topic to guide user search
-//  * @param n number of users to return
-//  * @returns list of user ids that are interested in the topic
-//  */
-// async function findUsers(ig : IgApiClient, topic : string, n : number) : Promise<number[]>{
-//     const result = await (await ig.feed.tag(topic).items()).map(tag => tag.user.pk)
-//     return result;
-// }
-const run = (un, pw, user, n) => __awaiter(void 0, void 0, void 0, function* () {
+/**
+ * Strategy which takes a topic and returns a batch of users to follow based on it
+ *      current strategy: search tag feed for a topic
+ *      for aribitrarily selected posts, randomly choose some users to follow
+ * @param ig logged in instagram client
+ * @param n number of users to return
+ * @param topic topic to guide user search
+ * @returns list of user ids that are interested in the topic
+ */
+function findUsersByHashTag(ig, n, topic) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const result = (yield ig.feed.tag(topic).items()).map(tag => tag.user.pk);
+        return result;
+    });
+}
+const run = (settings) => __awaiter(void 0, void 0, void 0, function* () {
     const ig = new instagram_private_api_1.IgApiClient();
     function login() {
         return __awaiter(this, void 0, void 0, function* () {
             // basic login-procedure
-            console.log(un);
-            ig.state.generateDevice(un);
-            yield ig.account.login(un, pw);
+            console.log(settings.username);
+            ig.state.generateDevice(settings.username);
+            yield ig.account.login(settings.username, settings.password);
         });
     }
     yield login();
-    const users = yield findUsers(ig, user, n);
+    let users = [];
+    if (settings.strategy == "findUsersByUsernameFollowers") {
+        users = yield findUsersByUsernameFollowers(ig, settings.n, settings.strategyParams[0]);
+    }
+    else if (settings.strategy == "findUsersByHashTagHashtag") {
+        users = yield findUsersByHashTag(ig, settings.n, settings.strategyParams[0]);
+    }
+    else {
+        throw new Error("Incorrect strategy input setting");
+    }
     console.log(users);
     for (const user of users) {
         yield followUser(ig, user);
         console.log("following user", user);
-        yield delay(Math.max(Math.random() * ONE_HOUR, TEN_MINUTES));
+        yield delay(Math.max(Math.random() * ONE_HALF_HOUR, FIVE_MINUTES));
     }
 });
-run(process_1.argv[2], process_1.argv[3], process_1.argv[4], parseInt(process_1.argv[5]));
+const followSettings = fs_1.default.readFileSync("./config/follow-settings.json").toString();
+const settings = JSON.parse(followSettings);
+console.log(settings);
+run(settings);
