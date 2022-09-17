@@ -127,8 +127,12 @@ cover_images
 
 tmp
 
+<<<<<<< HEAD
 follow-settings.json
 
 config
 
 account-info.txt
+=======
+follow-settings.json
+>>>>>>> parent of 4184045... hiding config folder
