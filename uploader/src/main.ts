@@ -2,10 +2,9 @@
 import puppeteer from 'puppeteer-extra';
 import { Browser, ElementHandle, Page, Frame } from 'puppeteer';
 import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder';
-import fs from 'fs'
 /* tslint:disable:no-console */
 import { IgApiClient } from 'instagram-private-api';
-import { readFile } from 'fs';
+import { readFileSync, readFile } from 'fs';
 import { promisify } from 'util';
 import { ContentSettings } from './interfaces';
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
@@ -39,7 +38,7 @@ const visitTikTok = async(page : Page) : Promise<void> =>{
 
 const setCookies= async (page : Page, cookiesFile : string) : Promise<void> =>{
     console.log("setting cookies")
-    const cookiesString = await fs.readFileSync(cookiesFile).toString();
+    const cookiesString = await readFileSync(cookiesFile).toString();
     const cookies = JSON.parse(cookiesString);
     await page.setCookie(...cookies);
 
@@ -228,7 +227,7 @@ const run = async(settings : ContentSettings) =>{
         );
     }
 }   
-const contentSettingsString = fs.readFileSync("config/content-settings.json").toString()
+const contentSettingsString = readFileSync("config/content-settings.json").toString()
 const contentSettings = JSON.parse(contentSettingsString) as ContentSettings;
 run(contentSettings);
        

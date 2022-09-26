@@ -5,10 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_screen_recorder_1 = require("puppeteer-screen-recorder");
-const fs_1 = __importDefault(require("fs"));
 /* tslint:disable:no-console */
 const instagram_private_api_1 = require("instagram-private-api");
-const fs_2 = require("fs");
+const fs_1 = require("fs");
 const util_1 = require("util");
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 var ffmpeg = require('fluent-ffmpeg');
@@ -33,7 +32,7 @@ const visitTikTok = async (page) => {
 };
 const setCookies = async (page, cookiesFile) => {
     console.log("setting cookies");
-    const cookiesString = await fs_1.default.readFileSync(cookiesFile).toString();
+    const cookiesString = await (0, fs_1.readFileSync)(cookiesFile).toString();
     const cookies = JSON.parse(cookiesString);
     await page.setCookie(...cookies);
 };
@@ -134,7 +133,7 @@ async function uploadToTikTok(cookiesFile, videoFile, caption) {
 }
 //UPLOAD TO REELS FUNCTIONS
 const uploadToReels = async (un, pw, imagePath, imageFilename, videoFile, caption, lat, long) => {
-    const readFileAsync = (0, util_1.promisify)(fs_2.readFile);
+    const readFileAsync = (0, util_1.promisify)(fs_1.readFile);
     const ig = new instagram_private_api_1.IgApiClient();
     async function login() {
         // basic login-procedure
@@ -176,21 +175,20 @@ const uploadToReels = async (un, pw, imagePath, imageFilename, videoFile, captio
 /**
  * Run with "npm start"
  */
-const run = async () => {
-    const content_settings_string = fs_1.default.readFileSync("config/content_settings.json").toString();
-    const content_settings = JSON.parse(content_settings_string);
-    const caption = content_settings.caption;
-    const videoFiles = fs_1.default.readdirSync("./content");
-    const videoFile = "./content/" + videoFiles.find((val) => val.endsWith(".mp4"));
-    const destination = content_settings.destination;
+const run = async (settings) => {
+    const caption = settings.caption;
+    const videoFile = "./content/" + settings.name + ".mp4";
+    const destination = settings.destination;
     if (destination == "tiktok") {
         const cookiesFile = './config/cookies.json';
         await uploadToTikTok(cookiesFile, videoFile, caption);
     }
     else if (destination == "reels") {
         const imagePath = "cover_images";
-        const imageFilename = "thumbnail.jpg";
-        await uploadToReels(content_settings.ig_username, content_settings.ig_password, imagePath, imageFilename, videoFile, caption, content_settings.latitude, content_settings.longitude);
+        const imageFilename = settings.name + ".jpg";
+        await uploadToReels(settings.ig_username, settings.ig_password, imagePath, imageFilename, videoFile, caption, settings.latitude, settings.longitude);
     }
 };
-run();
+const contentSettingsString = (0, fs_1.readFileSync)("config/content-settings.json").toString();
+const contentSettings = JSON.parse(contentSettingsString);
+run(contentSettings);

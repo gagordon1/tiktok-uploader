@@ -35,5 +35,6 @@ export interface ContentSettings{
 
 export interface Pipeline{
     /**links to be posted */
-    links : string[]
+    links : string[],
+    posted : string[]
 }

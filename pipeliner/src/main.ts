@@ -56,7 +56,7 @@ const visitTikTok = async(page : Page, url : string) : Promise<void> =>{
 
 const setCookies= async (page : Page, cookiesFile : string) : Promise<void> =>{
     console.log("setting cookies")
-    const cookiesString = await fs.readFileSync(cookiesFile).toString();
+    const cookiesString = fs.readFileSync(cookiesFile).toString();
     const cookies = JSON.parse(cookiesString);
     await page.setCookie(...cookies);
 
@@ -97,9 +97,10 @@ const run = async(settings : ContentSettings) =>{
     const pipeline = JSON.parse(pipelineString) as Pipeline;
     
     for (const like of recentLikes){
-        if (!pipeline.links.find(elt => elt === like)){
+        if (!pipeline.posted.find(elt => elt === like)){
             console.log("Adding like", like);
             pipeline.links.push(like);
+            pipeline.posted.push(like);
         }
     }
     fs.writeFileSync(pipelineFile, JSON.stringify(pipeline));

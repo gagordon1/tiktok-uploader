@@ -54,7 +54,7 @@ const visitTikTok = (page, url) => __awaiter(void 0, void 0, void 0, function* (
 });
 const setCookies = (page, cookiesFile) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("setting cookies");
-    const cookiesString = yield fs_1.default.readFileSync(cookiesFile).toString();
+    const cookiesString = fs_1.default.readFileSync(cookiesFile).toString();
     const cookies = JSON.parse(cookiesString);
     yield page.setCookie(...cookies);
 });
@@ -87,9 +87,10 @@ const run = (settings) => __awaiter(void 0, void 0, void 0, function* () {
     const pipelineString = fs_1.default.readFileSync(pipelineFile).toString();
     const pipeline = JSON.parse(pipelineString);
     for (const like of recentLikes) {
-        if (!pipeline.links.find(elt => elt === like)) {
+        if (!pipeline.posted.find(elt => elt === like)) {
             console.log("Adding like", like);
             pipeline.links.push(like);
+            pipeline.posted.push(like);
         }
     }
     fs_1.default.writeFileSync(pipelineFile, JSON.stringify(pipeline));
